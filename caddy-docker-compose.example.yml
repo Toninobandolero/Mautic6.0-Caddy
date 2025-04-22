@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      # Monta el código fuente de Mautic desde el host o desde el volumen del servicio mautic_web
+      - ./config:/var/www/html/config:ro
+      - ./logs:/var/www/html/var/logs:ro
+      - ./media/files:/var/www/html/media/files:ro
+      - ./media/images:/var/www/html/media/images:ro
+      # Si usas un volumen externo, ajústalo aquí
+    networks:
+      - mautic-caddy
+    environment:
+      - TZ=Europe/Madrid
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  mautic-caddy:
+    external: true
