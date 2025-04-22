@@ -105,6 +105,6 @@ volumes:
 
 networks:
   default: 
-    name: ${COMPOSE_PROJECT_NAME:-mautic_elestio}_default 
+    name: ${COMPOSE_PROJECT_NAME:-mautic_caddy}_default 
   mautic-caddy: 
     external: true
