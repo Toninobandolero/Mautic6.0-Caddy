@@ -88,7 +88,7 @@ version: "3.8"
 
 services:
   caddy:
-    image: caddy:2
+    image: caddy:latest
     container_name: caddy
     restart: unless-stopped
     ports:
