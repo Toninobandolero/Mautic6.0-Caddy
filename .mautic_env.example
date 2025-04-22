@@ -1,0 +1,9 @@
+# Ejemplo de configuración para .mautic_env
+MAUTIC_DB_HOST=db
+MAUTIC_DB_PORT=3306
+MAUTIC_DB_NAME=mautic_db
+MAUTIC_DB_USER=mautic_db_user
+MAUTIC_DB_PASSWORD=CAMBIAESTO
+MAUTIC_URL=https://tudominio.com
+MAUTIC_FORCE_SSL=false
+# Otros parámetros opcionales...

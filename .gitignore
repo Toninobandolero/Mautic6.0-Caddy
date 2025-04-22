@@ -1,0 +1,10 @@
+# Ignora datos y configuraciones locales
+config/
+logs/
+media/
+html/
+.env
+.mautic_env
+*.bak
+*.log
+*.pid

@@ -1,0 +1,111 @@
+version: "3.8"
+
+services:
+  db:
+    image: mysql:8.0 
+    restart: always 
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql 
+    networks:
+      - default
+    healthcheck: 
+      test: ["CMD-SHELL", "mysqladmin ping --host=127.0.0.1 --user=${MYSQL_USER} --password=${MYSQL_PASSWORD}"]
+      start_period: 10s 
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mautic_web:
+    build: 
+      context: . # Usa el Dockerfile en esta carpeta
+      args:
+        # Pasa la versión al Dockerfile (opcional, ya está por defecto en Dockerfile)
+        MAUTIC_VERSION: ${SOFTWARE_VERSION_TAG} 
+    restart: always
+    volumes:
+      # Monta SOLO las carpetas de DATOS persistentes
+      - ./config:/var/www/html/config:z            
+      - ./logs:/var/www/html/var/logs:z            
+      - ./media/files:/var/www/html/media/files:z  
+      - ./media/images:/var/www/html/media/images:z
+      # YA NO montamos temas manuales, vienen de la imagen construida
+    environment:
+      # Variables que podría usar el entrypoint (si lo hubiera) o Mautic
+      - DOCKER_MAUTIC_LOAD_TEST_DATA=${DOCKER_MAUTIC_LOAD_TEST_DATA:-false} 
+      - DOCKER_MAUTIC_RUN_MIGRATIONS=${DOCKER_MAUTIC_RUN_MIGRATIONS:-true} 
+    env_file:
+      - .mautic_env # Variables MAUTIC_*
+    networks:
+      - default
+      - n8n-caddy_default # Red externa para Caddy
+    depends_on:                 
+      db:
+        condition: service_healthy
+    healthcheck: # Healthcheck FPM (ahora usa la imagen base php:fpm)
+      # Necesitamos cgi-fcgi, que instalamos en el Dockerfile
+      test: ["CMD", "cgi-fcgi", "-bind", "-connect", "127.0.0.1:9000"] 
+      start_period: 10s 
+      interval: 5s
+      timeout: 5s
+      retries: 10 
+
+  mautic_cron:
+    build: 
+      context: . # Usa la misma imagen construida
+      args:
+        MAUTIC_VERSION: ${SOFTWARE_VERSION_TAG}
+    restart: always
+    volumes:
+      # Monta config y logs. Los temas están en la imagen.
+      - ./config:/var/www/html/config:z
+      - ./logs:/var/www/html/var/logs:z
+    environment:
+      - DOCKER_MAUTIC_ROLE=mautic_cron # El entrypoint de Mautic (si existe) debería leer esto
+      # O, si no hay entrypoint que maneje roles, podríamos sobreescribir el CMD
+      # command: ["sh", "-c", "echo 'Cron role simulation - add cron commands here' && sleep 3600"]
+    env_file:
+      - .mautic_env
+    networks:
+      - default
+    depends_on: 
+      mautic_web: # Ahora puede depender de service_healthy porque tenemos healthcheck
+        condition: service_healthy
+
+  mautic_worker:
+    build: 
+      context: . # Usa la misma imagen construida
+      args:
+        MAUTIC_VERSION: ${SOFTWARE_VERSION_TAG}
+    restart: always
+    volumes:
+      # Monta config y logs. Los temas están en la imagen.
+      - ./config:/var/www/html/config:z
+      - ./logs:/var/www/html/var/logs:z
+    environment:
+      - DOCKER_MAUTIC_ROLE=mautic_worker # El entrypoint debería leer esto
+      - DOCKER_MAUTIC_LOAD_TEST_DATA=${DOCKER_MAUTIC_LOAD_TEST_DATA:-false} 
+      - DOCKER_MAUTIC_RUN_MIGRATIONS=${DOCKER_MAUTIC_RUN_MIGRATIONS:-true} 
+      # O sobreescribir CMD
+      # command: ["sh", "-c", "echo 'Worker role simulation - add worker commands here' && sleep 3600"]
+    env_file:
+      - .mautic_env
+    networks:
+      - default
+    depends_on: 
+      mautic_web:
+        condition: service_healthy
+
+volumes:
+  mysql-data: 
+
+networks:
+  default: 
+    name: ${COMPOSE_PROJECT_NAME:-mautic_elestio}_default 
+  n8n-caddy_default: 
+    external: true
+
