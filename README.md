@@ -1,9 +1,10 @@
 # Mautic6.0-Caddy
-Este proyecto te permite levantar un entorno de Mautic 6 usando Docker Compose y Caddy como servidor web, sin Apache, ideal para producción y desarrollo moderno.
-=======
-# Mautic 6 + Docker Compose + Caddy (sin Apache)
 
-Este proyecto te permite levantar un entorno de Mautic 6 usando Docker Compose y Caddy como servidor web, sin Apache, ideal para producción y desarrollo moderno.
+Este proyecto te permite levantar un entorno de **Mautic 6** usando Docker Compose y Caddy como servidor web, sin Apache. Es ideal para producción y desarrollo moderno, y está mantenido por [Toninobandolero](https://github.com/Toninobandolero).
+
+Repositorio oficial: [https://github.com/Toninobandolero/Mautic6.0-Caddy](https://github.com/Toninobandolero/Mautic6.0-Caddy)
+
+---
 
 ## Características
 - Basado en PHP-FPM y Caddy (sin Apache)
@@ -20,8 +21,8 @@ Este proyecto te permite levantar un entorno de Mautic 6 usando Docker Compose y
 
 1. Clona el repositorio:
    ```bash
-   git clone https://github.com/TU_USUARIO/TU_REPO.git
-   cd TU_REPO
+   git clone https://github.com/Toninobandolero/Mautic6.0-Caddy.git
+   cd Mautic6.0-Caddy
    ```
 
 2. Copia y edita las variables de entorno:
@@ -38,14 +39,24 @@ Este proyecto te permite levantar un entorno de Mautic 6 usando Docker Compose y
 
 4. Accede a Mautic en https://localhost o el dominio configurado.
 
+---
+
 ## Variables de entorno principales
 
 - `.mautic_env`: Configuración de la base de datos y parámetros de Mautic
 - `.env`: Variables de Docker Compose (versión, migraciones, etc.)
 
+## ¿Cómo funciona este stack?
+
+- **mautic_web**: Servicio PHP-FPM que ejecuta Mautic 6, construido desde el Dockerfile incluido.
+- **db**: Servicio MySQL 8 para la base de datos de Mautic.
+- **caddy**: Servidor web moderno que sirve archivos estáticos y aplicaciones PHP vía FastCGI, gestionando certificados SSL automáticamente.
+- **Volúmenes**: Los directorios `config/`, `logs/` y `media/` se montan como volúmenes locales para persistencia.
+- **Redes**: Todos los servicios están en la misma red Docker, y Caddy expone los puertos 80/443.
+
 ## Actualizar el código fuente de Mautic
 
-Para actualizar Mautic, puedes reconstruir la imagen cambiando la variable `SOFTWARE_VERSION_TAG` en `.env` y ejecutando:
+Para actualizar Mautic, cambia la variable `SOFTWARE_VERSION_TAG` en `.env` y ejecuta:
 
 ```bash
 docker compose build --no-cache mautic_web mautic_cron mautic_worker
@@ -64,5 +75,4 @@ docker compose build --no-cache mautic_web mautic_cron mautic_worker
 MIT
 
 ## Créditos
-Basado en la comunidad Mautic y la integración moderna con Caddy.
->>>>>>> 76c5327 (Initial commit: Mautic 6 + Docker Compose + Caddy)
+Basado en la comunidad Mautic y la integración moderna con Caddy. Mantenido por [Toninobandolero](https://github.com/Toninobandolero).
