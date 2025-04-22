@@ -12,10 +12,12 @@ Repositorio oficial: [https://github.com/Toninobandolero/Mautic6.0-Caddy](https:
 - Volúmenes persistentes para configuración, medios y logs
 - Fácil de actualizar y mantener
 - Listo para HTTPS automático con Caddy
+- Integración con red externa y servicio Caddy para servir Mautic
 
 ## Requisitos
 - Docker
 - Docker Compose v2+
+- Una red Docker externa llamada `mautic-caddy` (usada por Caddy para exponer Mautic)
 
 ## Uso rápido
 
@@ -32,27 +34,50 @@ Repositorio oficial: [https://github.com/Toninobandolero/Mautic6.0-Caddy](https:
    # Edita los archivos para tus credenciales y preferencias
    ```
 
-3. Levanta el stack:
+3. Si no tienes la red externa para Caddy, créala:
+   ```bash
+   docker network create mautic-caddy
+   ```
+
+4. Levanta el stack:
    ```bash
    docker compose up -d --build
    ```
 
-4. Accede a Mautic en https://localhost o el dominio configurado.
+5. Asegúrate de tener el servicio **Caddy** (puedes usar el ejemplo de Caddyfile incluido) conectado a la red `mautic-caddy` y sirviendo `/var/www/html` de Mautic vía FastCGI (PHP-FPM).
+
+6. Accede a Mautic en https://localhost o el dominio configurado en Caddy.
 
 ---
-
-## Variables de entorno principales
-
-- `.mautic_env`: Configuración de la base de datos y parámetros de Mautic
-- `.env`: Variables de Docker Compose (versión, migraciones, etc.)
 
 ## ¿Cómo funciona este stack?
 
 - **mautic_web**: Servicio PHP-FPM que ejecuta Mautic 6, construido desde el Dockerfile incluido.
 - **db**: Servicio MySQL 8 para la base de datos de Mautic.
-- **caddy**: Servidor web moderno que sirve archivos estáticos y aplicaciones PHP vía FastCGI, gestionando certificados SSL automáticamente.
+- **caddy**: (No incluido en este compose, pero recomendado) Servidor web moderno que sirve archivos estáticos y aplicaciones PHP vía FastCGI, gestionando certificados SSL automáticamente. Debe estar en la red `mautic-caddy` y tener un `Caddyfile` adecuado (ver ejemplo en el repo).
 - **Volúmenes**: Los directorios `config/`, `logs/` y `media/` se montan como volúmenes locales para persistencia.
-- **Redes**: Todos los servicios están en la misma red Docker, y Caddy expone los puertos 80/443.
+- **Redes**: Todos los servicios están en la red interna por defecto y, para exponer Mautic, también en la red externa `mautic-caddy`.
+
+## Red Docker y Caddy
+
+Este stack asume que tienes (o vas a crear) una red Docker externa llamada `mautic-caddy`. Así, Caddy puede estar en otro contenedor (o máquina) y servir Mautic de forma segura y eficiente. Si usas otro nombre de red, ajusta el `docker-compose.yml` y el Caddyfile.
+
+## Ejemplo de Caddyfile
+
+```Caddyfile
+mautic.tudominio.com {
+    root * /var/www/html
+    encode gzip
+    php_fastcgi mautic_web:9000
+    file_server
+    log {
+        output stdout
+        format console
+    }
+}
+```
+
+Asegúrate de montar el directorio de Mautic en el contenedor de Caddy y de que ambos estén en la red `mautic-caddy`.
 
 ## Actualizar el código fuente de Mautic
 

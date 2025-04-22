@@ -42,7 +42,7 @@ services:
       - .mautic_env # Variables MAUTIC_*
     networks:
       - default
-      - n8n-caddy_default # Red externa para Caddy
+      - mautic-caddy # Red externa para Caddy
     depends_on:                 
       db:
         condition: service_healthy
@@ -106,6 +106,5 @@ volumes:
 networks:
   default: 
     name: ${COMPOSE_PROJECT_NAME:-mautic_elestio}_default 
-  n8n-caddy_default: 
+  mautic-caddy: 
     external: true
-
