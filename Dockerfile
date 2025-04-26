@@ -1,7 +1,6 @@
-# Build base
-FROM php:8.2-fpm-alpine AS builder
+FROM php:8.2-fpm-alpine
 
-# Dependencias necesarias
+# Instala todo lo necesario directamente
 RUN apk --no-cache add \
     bash \
     git \
@@ -15,32 +14,24 @@ RUN apk --no-cache add \
     mariadb-client \
     nginx \
     supervisor \
+    libpng \
+    libzip \
+    icu-libs \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_mysql zip intl gd mbstring opcache
 
-# Composer para manejar dependencias PHP
+# Instalar composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Imagen final
-FROM php:8.2-fpm-alpine
-
-# Copiar todo lo necesario
-COPY --from=builder /usr/local /usr/local
-COPY --from=builder /etc/supervisord.conf /etc/supervisord.conf
-
-# Copiamos el código fuente de Mautic
+# Copiar código de Mautic
+WORKDIR /var/www/html
 COPY . /var/www/html
 
-WORKDIR /var/www/html
-
-# Configurar permisos
-RUN addgroup -g 1000 www-data && adduser -u 1000 -G www-data -s /bin/sh -D www-data \
-    && chown -R www-data:www-data /var/www/html
+# Permisos
+RUN chown -R www-data:www-data /var/www/html
 
 USER www-data
 
-# Exponer el puerto del PHP-FPM
 EXPOSE 9000
 
-# Lanzamos PHP-FPM y el Supervisor
-CMD ["supervisord", "-c", "/etc/supervisord.conf"]
+CMD ["php-fpm"]
